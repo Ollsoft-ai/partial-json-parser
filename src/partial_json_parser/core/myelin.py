@@ -4,7 +4,7 @@ from re import compile
 from typing import List, Tuple, Union
 
 from .complete import _fix
-from .exceptions import PartialJSON
+from .exceptions import PartialJSON, MalformedJSON
 from .options import *
 
 finditer = compile(r'["\[\]{}]').finditer
@@ -296,3 +296,29 @@ def fix_fast_old(json_string: str, allow_partial: Union[Allow, int] = ALL):
     if not head[1:] + tail[:-1].strip():
         return json_string[:last_comma] + head[1:], tail + join_closing_tokens(stack[:-1])
     return json_string[: last_comma + 1] + head[1:], tail + join_closing_tokens(stack[:-1])
+
+
+def is_json_closed(json_string: str, handle_prefix_postfix: bool = True) -> bool:
+    """
+    Check if a JSON string is properly closed (all brackets and quotes are matched)
+    
+    Args:
+        json_string: The JSON string to check
+        handle_prefix_postfix: If True, will look for JSON between any prefix/postfix text
+    """
+    try:
+        # Use existing fix_fast function with appropriate flags
+        allow = PREFIX | POSTFIX if handle_prefix_postfix else 0
+        head, tail = fix_fast(json_string, allow)
+        
+        # If tail is empty, the JSON was complete/closed
+        return tail == ""
+        
+    except (PartialJSON, MalformedJSON):
+        return False
+
+def is_escaped(text: str, index: int) -> bool:
+    """Helper function to check if a quote at given index is escaped"""
+    text_before = text[:index]
+    count = index - len(text_before.rstrip("\\"))
+    return count % 2

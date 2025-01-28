@@ -1,7 +1,7 @@
 from typing import Callable, Dict, List, Optional, Union
 
 from .complete import fix
-from .myelin import fix_fast
+from .myelin import fix_fast, is_json_closed
 from .options import *
 
 Number = Union[int, float]
